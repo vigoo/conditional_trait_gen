@@ -4,14 +4,18 @@
 
 #![cfg(test)]
 
-use std::str::FromStr;
 use crate::*;
+use std::str::FromStr;
 
 use proc_macro2::{Span, TokenStream};
 
 impl SubstType {
     pub fn is_path(&self) -> bool {
-        if let SubstType::Path(_) = self { true } else { false }
+        if let SubstType::Path(_) = self {
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -48,10 +52,10 @@ fn try_parse<T: Parse>(args: TokenStream, text: &str) -> Result<T, String> {
 fn try_get_tokenstream(string: &str) -> Result<TokenStream, String> {
     match TokenStream::from_str(string) {
         Ok(s) => Ok(s),
-        Err(err) => {
-            Err(format!("could not transform test string into TokenStream: {}",
-                        annotate_error(string, &err.to_string(), err.span())))
-        }
+        Err(err) => Err(format!(
+            "could not transform test string into TokenStream: {}",
+            annotate_error(string, &err.to_string(), err.span())
+        )),
     }
 }
 
@@ -69,10 +73,10 @@ macro_rules! tokenstream {
             Err(err) => {
                 println!("{}", err);
                 $e += 1;
-                continue
+                continue;
             }
         }
-    }
+    };
 }
 
 /// `parse_str!(T: Parse, text: &str, error: mut int)`
@@ -89,28 +93,28 @@ macro_rules! parse_str {
             Err(err) => {
                 println!("could not parse {} from {}: {}", stringify!($t), $s, err);
                 $e += 1;
-                continue
+                continue;
             }
         }
-    }
+    };
 }
 
 #[test]
 fn parse_args() {
     let tests: &[(&str, &str, bool, bool, bool)] = &[
         // parameters                   generic         legacy  path    error
-        ("T -> i32, u32",               "T",            false,  true,   false),
-        ("my::U -> my::T<u32>",         "my::U",        false,  true,   false),
-        ("T -> Box<X>",                 "T",            false,  true,   false),
-        ("T -> Box<X>, &X, &mut X",     "T",            false,  false,  false),
-        ("T::U<V::W> -> X, Y",          "T::U<V::W>",   false,  true,   false),
-        ("T ->",                        "",             false,  true,   true),
-        ("[&T] -> [&mut T]",            "",             false,  false,  true),
+        ("T -> i32, u32", "T", false, true, false),
+        ("my::U -> my::T<u32>", "my::U", false, true, false),
+        ("T -> Box<X>", "T", false, true, false),
+        ("T -> Box<X>, &X, &mut X", "T", false, false, false),
+        ("T::U<V::W> -> X, Y", "T::U<V::W>", false, true, false),
+        ("T ->", "", false, true, true),
+        ("[&T] -> [&mut T]", "", false, false, true),
         //
-        ("u32, i32, u8, i8",            "u32",          true,   true,   false),
-        ("T::U<V::W>, X, Y",            "T::U<V::W>",   true,   true,   false),
-        ("u32 i32",                     "",             true,   true,   true),
-        ("u32",                         "",             true,   true,   true),
+        ("u32, i32, u8, i8", "u32", true, true, false),
+        ("T::U<V::W>, X, Y", "T::U<V::W>", true, true, false),
+        ("u32 i32", "", true, true, true),
+        ("u32", "", true, true, true),
     ];
     let mut error = 0;
     for (idx, &(string, generic, legacy, path, parse_error)) in tests.iter().enumerate() {
@@ -119,19 +123,23 @@ fn parse_args() {
         // tests Subst::parse
         let mut new_error = true;
         match try_parse::<Subst>(stream, string) {
-            Ok(subst) => {
-                match () {
-                    _ if parse_error =>
-                        println!("{report}expecting parse error"),
-                    _ if pathname(&subst.generic_arg) != generic =>
-                        println!("{report}expecting generic '{}' instead of '{}'", generic, pathname(&subst.generic_arg)),
-                    _ if subst.legacy != legacy =>
-                        println!("{report}expecting {}legacy", if legacy { "" } else { "non-" }),
-                    _ if !subst.new_types.iter().all(|t| t.is_path() == path) =>
-                        println!("{report}expecting {} mode", if path { "path" } else { "type" }),
-                    _ => new_error = false
-                }
-            }
+            Ok(subst) => match () {
+                _ if parse_error => println!("{report}expecting parse error"),
+                _ if pathname(&subst.generic_arg) != generic => println!(
+                    "{report}expecting generic '{}' instead of '{}'",
+                    generic,
+                    pathname(&subst.generic_arg)
+                ),
+                _ if subst.legacy != legacy => println!(
+                    "{report}expecting {}legacy",
+                    if legacy { "" } else { "non-" }
+                ),
+                _ if !subst.new_types.iter().all(|t| t.is_path() == path) => println!(
+                    "{report}expecting {} mode",
+                    if path { "path" } else { "type" }
+                ),
+                _ => new_error = false,
+            },
             Err(e) => {
                 if !parse_error {
                     println!("{report}parse error:\n{e}");
@@ -146,17 +154,19 @@ fn parse_args() {
             let pstring = format!("({string})");
             let stream = tokenstream!(&pstring, error);
             match try_parse::<AttrParams>(stream, &pstring) {
-                Ok(params) => {
-                    match () {
-                        _ if parse_error =>
-                            println!("{report}expecting parse error"),
-                        _ if pathname(&params.generic_arg) != generic =>
-                            println!("{report}expecting generic '{}' instead of '{}'", generic, pathname(&params.generic_arg)),
-                        _ if params.legacy != legacy =>
-                            println!("{report}expecting {}legacy", if legacy { "" } else { "non-" }),
-                        _ => new_error = false
-                    }
-                }
+                Ok(params) => match () {
+                    _ if parse_error => println!("{report}expecting parse error"),
+                    _ if pathname(&params.generic_arg) != generic => println!(
+                        "{report}expecting generic '{}' instead of '{}'",
+                        generic,
+                        pathname(&params.generic_arg)
+                    ),
+                    _ if params.legacy != legacy => println!(
+                        "{report}expecting {}legacy",
+                        if legacy { "" } else { "non-" }
+                    ),
+                    _ => new_error = false,
+                },
                 Err(e) => {
                     if !parse_error {
                         println!("{report}parse error:\n{e}");
@@ -177,18 +187,18 @@ fn parse_args() {
 fn test_path_prefix_len() {
     let tests = &[
         // prefix           full                # segments
-        ("T",               "T",                Some(1)),
-        ("T",               "T::U",             Some(1)),
-        ("T",               "T<U>",             Some(1)),
-        ("T",               "U",                None),
-        ("T",               "::T",              None),
-        ("T",               "U::T",             None),
-        ("T",               "U<T>",             None),
-        ("T::U",            "T::U",             Some(2)),
-        ("T::U",            "T::U::V",          Some(2)),
-        ("T<U>",            "T",                None),
-        ("T<U>",            "T<U>::V",          Some(1)),
-        ("T<U>",            "T<U::X>::V",       None),
+        ("T", "T", Some(1)),
+        ("T", "T::U", Some(1)),
+        ("T", "T<U>", Some(1)),
+        ("T", "U", None),
+        ("T", "::T", None),
+        ("T", "U::T", None),
+        ("T", "U<T>", None),
+        ("T::U", "T::U", Some(2)),
+        ("T::U", "T::U::V", Some(2)),
+        ("T<U>", "T", None),
+        ("T<U>", "T<U>::V", Some(1)),
+        ("T<U>", "T<U::X>::V", None),
     ];
     let mut error = 0;
     for (idx, &(prefix, full, exp_len)) in tests.iter().enumerate() {
@@ -206,5 +216,8 @@ fn test_path_prefix_len() {
 
 #[test]
 fn test_replace_str() {
-    assert_eq!(replace_str("ab cd ab ef", "ab", "X"), Some("X cd X ef".to_string()));
+    assert_eq!(
+        replace_str("ab cd ab ef", "ab", "X"),
+        Some("X cd X ef".to_string())
+    );
 }

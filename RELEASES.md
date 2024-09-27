@@ -1,3 +1,9 @@
+# Forked `conditional-trait-gen` releases
+# 0.4.0 (2024-09-27)
+
+- First release of the fork, introducing the `#[when]` attribute
+
+# Original `trait-gen` releases
 # 0.3.2 (2023-06-23)
 
 - update documentation

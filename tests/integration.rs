@@ -21,38 +21,50 @@ mod supported_formats {
     // legacy format
     #[trait_gen(i8, u8)]
     impl Test<i8> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     // main format
     #[trait_gen(T -> i16, u16)]
     impl Test<T> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     #[cfg(feature = "in_format")]
     // alternate format with 'in' and brackets
     #[trait_gen(T in [i32, u32])]
     impl Test<T> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     // verifies that brackets can be used for types with the '->' syntax
     #[trait_gen(T -> [i64;2])]
     impl Test<T> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     #[trait_gen(T -> &[u64])]
     impl Test<T> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     #[cfg(feature = "in_format")]
     // verifies that brackets can be used for types with the 'in' syntax
     #[trait_gen(T in [[i128;2]])]
     impl Test<T> {
-        fn test() -> bool { true }
+        fn test() -> bool {
+            true
+        }
     }
 
     #[test]
@@ -61,7 +73,7 @@ mod supported_formats {
         assert!(Test::<u8>::test());
         assert!(Test::<i16>::test());
         assert!(Test::<u16>::test());
-        assert!(Test::<[i64;2]>::test());
+        assert!(Test::<[i64; 2]>::test());
         assert!(Test::<&[u64]>::test());
     }
 
@@ -71,7 +83,7 @@ mod supported_formats {
     fn test_in_format() {
         assert!(Test::<i32>::test());
         assert!(Test::<u32>::test());
-        assert!(Test::<[i128;2]>::test());
+        assert!(Test::<[i128; 2]>::test());
     }
 }
 
@@ -229,7 +241,8 @@ mod type_case_04 {
     }
 
     fn negate<T, O>(x: T) -> O
-        where T: Negate<Output = O>
+    where
+        T: Negate<Output = O>,
     {
         x.negate()
     }
@@ -240,20 +253,22 @@ mod type_case_04 {
         let x_ref: &Meter = &Meter(5);
         let y = negate(x);
         let y_ref = negate(x_ref);
-        assert_eq!(y, Meter(-5));  // doesn't need forward definition
+        assert_eq!(y, Meter(-5)); // doesn't need forward definition
         assert_eq!(y_ref, Meter(-5));
     }
 }
 
 // Fake types for the tests
-struct T { pub offset: u64 }
+struct T {
+    pub offset: u64,
+}
 struct U(u32);
 struct Meter<T>(T);
 struct Foot<T>(T);
 
 mod path_case_01 {
-    use trait_gen::trait_gen;
     use std::ops::{Add, Neg};
+    use trait_gen::trait_gen;
 
     pub mod inner {}
 
@@ -301,29 +316,29 @@ mod path_case_02 {
     struct Foot<T>(T);
 
     pub mod inner {
-        use trait_gen::trait_gen;
         use std::ops::Add;
-        
+        use trait_gen::trait_gen;
+
         #[trait_gen(gen::U -> super::Meter<f32>, super::Foot<f32>)]
         impl Add for gen::U {
             type Output = gen::U;
-        
+
             fn add(self, rhs: Self) -> Self::Output {
                 gen::U(self.0 + rhs.0)
             }
         }
-        
+
         #[test]
         fn test() {
             let a = super::Meter::<f32>(1.0);
             let b = super::Meter::<f32>(4.0);
-        
+
             let c = a + b;
             assert_eq!(c.0, 5.0);
-        
+
             let a = super::Foot::<f32>(1.0);
             let b = super::Foot::<f32>(4.0);
-        
+
             let c = a + b;
             assert_eq!(c.0, 5.0);
         }
@@ -331,8 +346,8 @@ mod path_case_02 {
 }
 
 mod path_case_03 {
-    use trait_gen::trait_gen;
     use std::fmt::Display;
+    use trait_gen::trait_gen;
 
     struct Name<'a>(&'a str);
     struct Value(i32);
@@ -454,7 +469,9 @@ mod literals {
     }
 
     fn call(s: &str) {
-        unsafe { CALLS.push(s.to_string()); }
+        unsafe {
+            CALLS.push(s.to_string());
+        }
     }
 
     #[trait_gen(T -> u32, u64)]
@@ -509,13 +526,17 @@ mod subst_cases {
 mod type_args {
     use trait_gen::trait_gen;
 
-    trait Number<X, T> { fn fake(x: X) -> T; }
+    trait Number<X, T> {
+        fn fake(x: X) -> T;
+    }
 
     #[trait_gen(T -> f32, f64)]
     // all trait arguments must change:
     impl Number<T, T> for T {
         /// my fake doc
-        fn fake(_x: T) -> T { 1.0 as T }
+        fn fake(_x: T) -> T {
+            1.0 as T
+        }
     }
 
     struct Meter<U>(U);
@@ -529,7 +550,9 @@ mod type_args {
         #[doc = "length for type `Meter<${U}>`"]
         fn length(&self) -> U {
             // generic ident must not collide, but bound arguments must change:
-            fn identity<T: Number<U, U>>(x: T) -> T { x }
+            fn identity<T: Number<U, U>>(x: T) -> T {
+                x
+            }
             identity(self.0 as U)
         }
     }
@@ -780,12 +803,20 @@ mod ex03a {
 mod ex04 {
     use trait_gen::trait_gen;
 
-    trait A where Self: Sized {
-        fn a(self) -> i32 { 1 }
+    trait A where
+        Self: Sized,
+    {
+        fn a(self) -> i32 {
+            1
+        }
     }
 
-    trait B where Self: Sized {
-        fn b(self) -> i32 { 2 }
+    trait B where
+        Self: Sized,
+    {
+        fn b(self) -> i32 {
+            2
+        }
     }
 
     // Use the macro to generate multiple traits for different types
@@ -928,7 +959,7 @@ mod ex03b {
     trait ToU64 {
         fn into_u64(self) -> u64;
     }
-    
+
     // This doesn't work because the 'u64' return type of 'into_u64' would be substituted too:
     //
     // #[trait_gen(u64, i64, u32, i32, u16, i16, u8, i8)]
@@ -939,7 +970,7 @@ mod ex03b {
     // }
 
     type T = u64;
-    
+
     #[trait_gen(T, i64, u32, i32, u16, i16, u8, i8)]
     impl ToU64 for T {
         /// Transforms the value into a `u64` type
@@ -954,7 +985,7 @@ mod ex03b {
             self as u64 + T + x.offset
         }
     }
-    
+
     #[test]
     fn test() {
         let a = 10_u64;
@@ -965,7 +996,7 @@ mod ex03b {
         let f = 10_i16;
         let g = 10_u8;
         let h = 10_i8;
-    
+
         assert_eq!(a.into_u64(), 10_u64);
         assert_eq!(b.into_u64(), 10_u64);
         assert_eq!(c.into_u64(), 10_u64);
@@ -974,7 +1005,118 @@ mod ex03b {
         assert_eq!(f.into_u64(), 10_u64);
         assert_eq!(g.into_u64(), 10_u64);
         assert_eq!(h.into_u64(), 10_u64);
-    }    
+    }
+}
+
+mod conditional {
+    use async_trait::async_trait;
+    use trait_gen::{trait_gen, when};
+
+    mod sqlx {
+        pub mod sqlite {
+            #[derive(Debug)]
+            pub struct Sqlite;
+        }
+        pub mod mysql {
+            #[derive(Debug)]
+            pub struct MySql;
+        }
+        pub mod postgres {
+            #[derive(Debug)]
+            pub struct Postgres;
+        }
+
+        pub struct Pool<DB> {
+            pub db: DB,
+        }
+    }
+
+    #[async_trait]
+    trait Repo {
+        async fn create(&self, param: String) -> Result<u64, String>;
+        async fn read(&self, id: u64) -> Result<String, String>;
+        async fn update(&self, id: u64, param: String) -> Result<(), String>;
+        async fn delete(&self, id: u64) -> Result<(), String>;
+    }
+
+    #[trait_gen(DB -> sqlx::sqlite::Sqlite, sqlx::mysql::MySql, sqlx::postgres::Postgres)]
+    #[async_trait]
+    impl Repo for sqlx::Pool<DB> {
+        async fn create(&self, param: String) -> Result<u64, String> {
+            println!("create {param} in {:?}", self.db);
+            Ok(1)
+        }
+
+        async fn read(&self, id: u64) -> Result<String, String> {
+            println!("read {id} from {:?}", self.db);
+            Ok(format!("{:?}/{id}", self.db))
+        }
+
+        #[when(sqlx::sqlite::Sqlite -> update)]
+        async fn update_sqlite(&self, id: u64, param: String) -> Result<(), String> {
+            println!("update {id} with {param} in {:?}", self.db);
+            Err("sqlite implementation".to_string())
+        }
+
+        #[when(sqlx::mysql::MySql -> update)]
+        async fn update_mysql(&self, id: u64, param: String) -> Result<(), String> {
+            println!("update {id} with {param} in {:?}", self.db);
+            Err("mysql implementation".to_string())
+        }
+
+        #[when(sqlx::postgres::Postgres -> update)]
+        async fn update_postgres(&self, id: u64, param: String) -> Result<(), String> {
+            println!("update {id} with {param} in {:?}", self.db);
+            Err("postgres implementation".to_string())
+        }
+
+        async fn delete(&self, id: u64) -> Result<(), String> {
+            println!("delete {id} from {:?}", self.db);
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn sqlite_test() {
+        let pool = sqlx::Pool {
+            db: sqlx::sqlite::Sqlite,
+        };
+        assert_eq!(pool.create("test".to_string()).await, Ok(1));
+        assert_eq!(pool.read(1).await, Ok("Sqlite/1".to_string()));
+        assert_eq!(
+            pool.update(1, "test".to_string()).await,
+            Err("sqlite implementation".to_string())
+        );
+        assert_eq!(pool.delete(1).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn mysql_test() {
+        let pool = sqlx::Pool {
+            db: sqlx::mysql::MySql,
+        };
+        assert_eq!(pool.create("test".to_string()).await, Ok(1));
+        assert_eq!(pool.read(1).await, Ok("MySql/1".to_string()));
+        assert_eq!(
+            pool.update(1, "test".to_string()).await,
+            Err("mysql implementation".to_string())
+        );
+        assert_eq!(pool.delete(1).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn postgres_test() {
+        let pool = sqlx::Pool {
+            db: sqlx::postgres::Postgres,
+        };
+        assert_eq!(pool.create("test".to_string()).await, Ok(1));
+        assert_eq!(pool.read(1).await, Ok("Postgres/1".to_string()));
+        assert_eq!(
+            pool.update(1, "test".to_string()).await,
+            Err("postgres implementation".to_string())
+        );
+        assert_eq!(pool.delete(1).await, Ok(()));
+    }
 }
 
 // =============================================================================
@@ -982,8 +1124,8 @@ mod ex03b {
 // -----------------------------------------------------------------------------
 
 mod impl_type_01 {
-    use trait_gen::trait_gen;
     use super::{Foot, Meter};
+    use trait_gen::trait_gen;
 
     #[trait_gen(T -> f32, f64)]
     impl Foot<T> {
@@ -1003,12 +1145,15 @@ mod impl_type_01 {
 }
 
 mod impl_type_02 {
-    use trait_gen::trait_gen;
     use super::{Foot, Meter};
+    use trait_gen::trait_gen;
 
     #[trait_gen(T -> f32, f64)]
     impl Meter<T> {
-        fn from_foot<F>(x: Foot<F>) -> Self where T: From<F> {
+        fn from_foot<F>(x: Foot<F>) -> Self
+        where
+            T: From<F>,
+        {
             Meter(T::from(x.0) / 3.372)
         }
     }
